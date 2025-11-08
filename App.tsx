@@ -26,6 +26,12 @@ const GiftIcon: React.FC<{className?: string}> = ({ className }) => (
   </svg>
 );
 
+const ArrowRightIcon: React.FC<{className?: string}> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}>
+    <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
+  </svg>
+);
+
 
 const App: React.FC = () => {
   const [currentBook, setCurrentBook] = useState<Book>(bibleService.getBook('Gênesis'));
@@ -274,10 +280,18 @@ const App: React.FC = () => {
           href="https://s.shopee.com.br/4LBOSfdWU8" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="w-full max-w-4xl mx-auto mb-4 p-3 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold text-center rounded-lg shadow-lg transition-colors duration-300 flex items-center justify-center gap-2"
+          className="w-full max-w-4xl mx-auto mb-4 p-3 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold rounded-lg shadow-lg transition-all duration-300 flex items-center justify-between gap-4"
         >
-          <GiftIcon className="w-5 h-5" />
-          Aprofunde seus estudos! Adquira sua Bíblia de Estudo completa aqui.
+          <div className="flex items-center gap-3">
+            <GiftIcon className="w-6 h-6 flex-shrink-0" />
+            <span className="text-left text-sm sm:text-base">
+              <span className="font-extrabold">Aprofunde seus estudos!</span> Adquira sua Bíblia de Estudo completa.
+            </span>
+          </div>
+          <div className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-full text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap transition-colors">
+            <span>Clique Aqui</span>
+            <ArrowRightIcon className="w-4 h-4" />
+          </div>
         </a>
         
         <header className="w-full max-w-4xl mx-auto text-center">
@@ -287,7 +301,7 @@ const App: React.FC = () => {
           <p className="text-amber-100/80 mt-2 text-sm sm:text-base">Uma jornada espiritual interativa e ilustrada</p>
         </header>
         
-        <main className="w-full flex-grow flex flex-col items-center justify-center">
+        <main className="w-full flex-grow flex flex-col items-center">
           <SearchBar onSearch={handleSearch} />
           
           <div className="flex items-center justify-center gap-4 mt-4 text-amber-200/80">
