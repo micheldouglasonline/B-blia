@@ -1,0 +1,81 @@
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
+  }
+}
+</script>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bíblia Dinâmica Ilustrada - Estudo Bíblico Online</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Explore a Bíblia Sagrada como nunca antes. Uma Bíblia online completa em português, com estudo bíblico interativo, busca de versículos, ilustrações geradas por IA, anotações pessoais e um design deslumbrante. Mergulhe na Palavra de Deus, de Gênesis a Apocalipse, e fortaleça sua fé." />
+    <meta name="keywords" content="Bíblia Sagrada, Bíblia Online, Estudo Bíblico, Versículos Bíblicos, Palavra de Deus, Jesus Cristo, Deus, Cristianismo, Fé, Oração, Salmos, Gênesis, Apocalipse, Antigo Testamento, Novo Testamento, Evangelho, Escrituras Sagradas, Leitura da Bíblia, Bíblia de Estudo, Bíblia Ilustrada, Religião, Espiritualidade, Igreja, Devocional, Meditação, Louvor, Adoração, Teologia, Doutrina Cristã, Personagens Bíblicos, Histórias da Bíblia, Parábolas de Jesus, Sermão, Pregação, Protestantismo, Catolicismo, Igrejas Evangélicas, Batismo, Santa Ceia, Espírito Santo, Trindade, Salvação, Graça, Perdão, Amor, Esperança, Profecia, Milagres, Vida Cristã, Comunidade, Bíblia em Português, Bíblia Dinâmica" />
+    <meta name="author" content="Seu Nome ou Nome da Organização" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph Meta Tags (para compartilhamento em redes sociais) -->
+    <meta property="og:title" content="Bíblia Dinâmica Ilustrada - Estudo Bíblico Online" />
+    <meta property="og:description" content="Uma experiência de leitura da Bíblia imersiva e interativa com busca de versículos, ilustrações por IA e anotações." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="URL_DO_SEU_SITE_AQUI" />
+    <meta property="og:image" content="URL_DE_UMA_IMAGEM_PREVIEW_AQUI" />
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-serif-display {
+        font-family: 'EB Garamond', serif;
+      }
+      
+      /* Paper texture using a subtle noise pattern */
+      .paper-texture {
+        background-color: #fdfaf3;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEWFhYWDg4N3d3dtbW17e3t1dXWBgYGHh4d5eXlzc3OLi4ubm5uVlZWPj4+NjY19fX2JiYl/f39ra2uRkZGZmZlpaWmXl5dvb29xcXGTk5NnZ2c8TV1mAAAAG3RSTlNAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAvEOwtAAAFVklEQVR4XpWWB67c2BUFb3g557T/hRo9/WUMZHlgr4Bg8Z4qQgQJlHI4A8SzFVrapvmTF9O7dmYRFZ60YiBhJRCgh1FYhiLAmdvX0CzTOpNE77ME0Zty/nWWzchDtiqrmQDeuv3powQ5ta2eN0FY0InkqDD73lT9c9lEzwUNqgFHs9VQce3TVClFCQrSTfOiYkVJQBmpbq2L6iZavPnAPcoU0dSw0SUTtjiIL0I9+cnDelbAMaukPN/AE5EAYCCuQc4qrY9boGGbUmutNxYfMb8/2cSGTODgEAZ2AGSiL0dUWJviUvFitwKnAFhKirorSAVcrp7AZiGbZAkoU8FPkkFJklhZBN+TzNagEhMm2IdnADgCAmYkEVerTstAqAZDBtnBItyIO/aN_/G8wADKGCgIAwgg2fegGGwRuRNcdM8VBFAhQmKMasSoGmGZomg3rdpc0C1Fc1IkpbIWK3GpuE9WjMEzwNABwHSJoRgGU7ARjsAYD5OB-9w4IhGCKnOBQCJ7vR2w7N9cm9gEAZsOAxGSAwG5da18YATfAcIZsADcIysL0DNfglFhBYmZBHJ5TKOg3YEEQqaWE0tQRxAxHBYuidBx0gsubV9/3M+za5aFCKxVsY340YNWw4VwAKTvYjRFAIwDsShECLdcpDuLvHKPpgZXNsqJCg2uhPcUisCSK5iYUpNb2M7UAnDEbTs17VrEDdAvgGgnwGohWCvP9+27N80d1sVStvXA8206wAKAHbSjYpgoYid5tH3J6N3tNAGs3H9pE5sJ7pQ23Sifd5a64i3sT23gYDBMzZEBpK625Q40cpxfeC4A2H0gATQGgG2tQ2gI2gZvaGgsxJkLoA3cdaA0DHF0wAYiAm5sBEb2DE2A2GgQDIaBEMhgzISKL5A8bYAxGSAwG3d2gBwAy2AABk4ExsJoZAXE4Mw2I5iAFsNAbCxNGz3nLwD4I6OonB4HwSQAZAgU/e4eIMgADdASAAPwQOADXgCgBBBmYgAHDQ5jYQGMMb6OdsAwF5ADgH2B9s0D0A3MA0GzUvE5sKCrBEZ8Yn20wQ0zYBwAc0wAuGSsAdQb3V1d8zG9gAZgA7gEaA3sAb8P7Z4GFhBhyAwCe8BDwgaAS4G8A7gEHxP3wB3wB3wB3wB3wB3wB3wB3wB3wB3wB3wB3wA7gEdAGbQOiAAeAHQA+gAkBgYABgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGAAYGBgYGA...
+        scrollbar-width: thin;
+        scrollbar--color: #a16207 #fdfaf3;
+      }
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 8px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: #a16207;
+        border-radius: 4px;
+        border: 2px solid #fdfaf3;
+      }
+
+      /* Inner shadow for book pages */
+      .shadow-inner-left {
+        box-shadow: inset 10px 0px 15px -10px rgba(0,0,0,0.3);
+      }
+      .shadow-inner-right {
+        box-shadow: inset -10px 0px 15px -10px rgba(0,0,0,0.3);
+      }
+      .transform-style-3d {
+        transform-style: preserve-3d;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
