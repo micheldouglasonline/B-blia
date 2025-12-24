@@ -48,24 +48,24 @@ const VerseItem: React.FC<{
 
   return (
     <div 
-      className="verse-item relative group cursor-pointer hover:bg-amber-900/5 rounded-2xl p-6 -mx-3 transition-all duration-700 border border-transparent hover:border-amber-200/40"
+      className="verse-item relative group cursor-pointer hover:bg-amber-900/5 rounded-xl p-3 md:p-4 -mx-2 transition-all duration-500 border border-transparent hover:border-amber-200/40"
       onClick={() => onVerseClick(bookName, chapterNumber, verse)}
     >
-      <div className="flex gap-6 items-start">
-        <div className="flex flex-col items-center pt-1 min-w-[40px]">
-          <span className="font-sans text-amber-800/30 text-xs font-black uppercase tracking-widest mb-4 select-none">{verse.verse}</span>
+      <div className="flex gap-4 items-start">
+        <div className="flex flex-col items-center pt-1 min-w-[32px]">
+          <span className="font-sans text-amber-800/40 text-[9px] font-black uppercase tracking-widest mb-2 select-none">{verse.verse}</span>
           <button 
             onClick={handleReadVerse}
-            className="verse-audio-btn p-3 rounded-full text-amber-900/10 hover:text-amber-700 hover:bg-amber-200/60 transition-all flex items-center justify-center shadow-inner"
+            className="verse-audio-btn p-2 rounded-full text-amber-900/10 hover:text-amber-700 hover:bg-amber-200/60 transition-all flex items-center justify-center shadow-inner"
             title="Ouvir versículo"
           >
-            <SpeakerIcon className="w-5 h-5" />
+            <SpeakerIcon className="w-4 h-4" />
           </button>
         </div>
         
-        <p className="text-slate-900 font-serif-display text-2xl md:text-3xl leading-relaxed flex-grow antialiased">
+        <p className="text-slate-900 font-serif-display text-lg md:text-xl leading-relaxed flex-grow antialiased">
           {verse.text}
-          {hasNote && <span className="ml-4 inline-block w-3 h-3 rounded-full bg-amber-600 shadow-[0_0_15px_rgba(217,119,6,0.8)] animate-pulse"></span>}
+          {hasNote && <span className="ml-3 inline-block w-2.5 h-2.5 rounded-full bg-amber-600 shadow-[0_0_15px_rgba(217,119,6,0.8)] animate-pulse"></span>}
         </p>
       </div>
     </div>
@@ -81,20 +81,20 @@ const PageContent: React.FC<{
 }> = ({ bookName, chapter, notes, onVerseClick, isBackPage }) => {
     if (!chapter) return null;
     return (
-        <div className={`p-10 md:p-20 h-full overflow-y-auto scrollbar-thin paper-texture relative ${isBackPage ? 'scale-x-[-1]' : ''}`}>
+        <div className={`p-8 md:p-14 h-full overflow-y-auto scrollbar-thin paper-texture relative ${isBackPage ? 'scale-x-[-1]' : ''}`}>
             {/* Gradiente sutil para volume no centro do livro */}
             <div className={`absolute top-0 bottom-0 w-28 pointer-events-none z-10 ${isBackPage ? 'right-0 bg-gradient-to-l' : 'left-0 bg-gradient-to-r'} from-black/[0.12] to-transparent`}></div>
             
-            <h2 className="font-serif-display text-6xl md:text-7xl font-bold text-amber-950 text-center mb-16 pb-8 border-b-4 border-amber-900/10 italic tracking-tighter">
+            <h2 className="font-serif-display text-3xl md:text-4xl font-bold text-amber-950 text-center mb-10 pb-6 border-b-2 border-amber-900/10 italic tracking-tighter">
               {bookName} <span className="text-amber-700/70 font-sans italic">{chapter.chapter}</span>
             </h2>
-            <div className="space-y-6">
+            <div className="space-y-2 md:space-y-3">
             {chapter.verses.map((v) => (
               <VerseItem key={v.verse} bookName={bookName} chapterNumber={chapter.chapter} verse={v} hasNote={!!notes[`${bookName}-${chapter.chapter}-${v.verse}`]} onVerseClick={onVerseClick} />
             ))}
             </div>
             
-            <div className="mt-24 pt-12 border-t border-amber-900/5 text-center text-amber-900/20 font-serif-display italic text-xl select-none uppercase tracking-widest font-bold">
+            <div className="mt-16 pt-8 border-t border-amber-900/5 text-center text-amber-900/20 font-serif-display italic text-xs select-none uppercase tracking-widest font-bold">
                 Sagrada Escritura
             </div>
         </div>
@@ -139,7 +139,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     <svg className="w-40 h-40 text-amber-900/5 mb-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
-                    <p className="font-serif-display text-7xl italic text-amber-950/10 tracking-[0.5em] font-black uppercase">AMÉM</p>
+                    <p className="font-serif-display text-5xl italic text-amber-950/10 tracking-[0.5em] font-black uppercase">AMÉM</p>
                 </div>
             )}
         </div>
