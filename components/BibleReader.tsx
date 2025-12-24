@@ -48,24 +48,24 @@ const VerseItem: React.FC<{
 
   return (
     <div 
-      className="verse-item relative group cursor-pointer hover:bg-amber-900/5 rounded-2xl p-5 -mx-2 transition-all duration-500 border border-transparent hover:border-amber-200/30"
+      className="verse-item relative group cursor-pointer hover:bg-amber-900/5 rounded-2xl p-6 -mx-3 transition-all duration-700 border border-transparent hover:border-amber-200/40"
       onClick={() => onVerseClick(bookName, chapterNumber, verse)}
     >
-      <div className="flex gap-5 items-start">
-        <div className="flex flex-col items-center pt-1 min-w-[36px]">
-          <span className="font-sans text-amber-800/40 text-xs font-black uppercase tracking-widest mb-3">{verse.verse}</span>
+      <div className="flex gap-6 items-start">
+        <div className="flex flex-col items-center pt-1 min-w-[40px]">
+          <span className="font-sans text-amber-800/30 text-xs font-black uppercase tracking-widest mb-4 select-none">{verse.verse}</span>
           <button 
             onClick={handleReadVerse}
-            className="verse-audio-btn p-2.5 rounded-full text-amber-900/20 hover:text-amber-700 hover:bg-amber-200/50 transition-all flex items-center justify-center shadow-sm"
-            title="Ouvir este versículo"
+            className="verse-audio-btn p-3 rounded-full text-amber-900/10 hover:text-amber-700 hover:bg-amber-200/60 transition-all flex items-center justify-center shadow-inner"
+            title="Ouvir versículo"
           >
-            <SpeakerIcon className="w-4 h-4" />
+            <SpeakerIcon className="w-5 h-5" />
           </button>
         </div>
         
-        <p className="text-slate-900 font-serif-display text-2xl leading-relaxed flex-grow antialiased">
+        <p className="text-slate-900 font-serif-display text-2xl md:text-3xl leading-relaxed flex-grow antialiased">
           {verse.text}
-          {hasNote && <span className="ml-3 inline-block w-2.5 h-2.5 rounded-full bg-amber-600 shadow-lg shadow-amber-600/50 animate-pulse"></span>}
+          {hasNote && <span className="ml-4 inline-block w-3 h-3 rounded-full bg-amber-600 shadow-[0_0_15px_rgba(217,119,6,0.8)] animate-pulse"></span>}
         </p>
       </div>
     </div>
@@ -81,21 +81,21 @@ const PageContent: React.FC<{
 }> = ({ bookName, chapter, notes, onVerseClick, isBackPage }) => {
     if (!chapter) return null;
     return (
-        <div className={`p-10 md:p-16 h-full overflow-y-auto scrollbar-thin paper-texture relative ${isBackPage ? 'scale-x-[-1]' : ''}`}>
-            {/* Sombreamento profundo no centro */}
-            <div className={`absolute top-0 bottom-0 w-20 pointer-events-none z-10 ${isBackPage ? 'right-0 bg-gradient-to-l' : 'left-0 bg-gradient-to-r'} from-black/[0.08] to-transparent`}></div>
+        <div className={`p-10 md:p-20 h-full overflow-y-auto scrollbar-thin paper-texture relative ${isBackPage ? 'scale-x-[-1]' : ''}`}>
+            {/* Gradiente sutil para volume no centro do livro */}
+            <div className={`absolute top-0 bottom-0 w-28 pointer-events-none z-10 ${isBackPage ? 'right-0 bg-gradient-to-l' : 'left-0 bg-gradient-to-r'} from-black/[0.12] to-transparent`}></div>
             
-            <h2 className="font-serif-display text-6xl font-bold text-amber-950 text-center mb-12 pb-6 border-b-2 border-amber-900/10 italic tracking-tighter">
-              {bookName} <span className="text-amber-700/80">{chapter.chapter}</span>
+            <h2 className="font-serif-display text-6xl md:text-7xl font-bold text-amber-950 text-center mb-16 pb-8 border-b-4 border-amber-900/10 italic tracking-tighter">
+              {bookName} <span className="text-amber-700/70 font-sans italic">{chapter.chapter}</span>
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-6">
             {chapter.verses.map((v) => (
               <VerseItem key={v.verse} bookName={bookName} chapterNumber={chapter.chapter} verse={v} hasNote={!!notes[`${bookName}-${chapter.chapter}-${v.verse}`]} onVerseClick={onVerseClick} />
             ))}
             </div>
             
-            <div className="mt-20 pt-10 border-t border-amber-900/5 text-center text-amber-900/30 font-serif-display italic text-lg select-none">
-                Palavra Viva • {bookName}
+            <div className="mt-24 pt-12 border-t border-amber-900/5 text-center text-amber-900/20 font-serif-display italic text-xl select-none uppercase tracking-widest font-bold">
+                Sagrada Escritura
             </div>
         </div>
     );
@@ -108,13 +108,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 }) => {
   
   return (
-    <div className="book-perspective w-full max-w-3xl lg:max-w-7xl mx-auto">
-      <div className="book-wrapper relative w-full aspect-[4/3.5] md:aspect-[2/1.4] shadow-[0_80px_160px_-40px_rgba(0,0,0,0.9)] rounded-2xl flex overflow-visible">
+    <div className="book-perspective w-full max-w-4xl lg:max-w-7xl mx-auto">
+      <div className="book-wrapper relative w-full aspect-[4/3.8] md:aspect-[2/1.4] shadow-[0_100px_200px_-50px_rgba(0,0,0,0.95)] rounded-2xl flex overflow-visible bg-[#2c251c]">
         <div className="book-spine" />
         
-        {/* LADO ESQUERDO FIXO */}
-        <div className="w-1/2 h-full paper-texture rounded-l-2xl overflow-hidden flex flex-col border-r border-black/20 relative">
-            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none"></div>
+        {/* LADO ESQUERDO FIXO (Página de Referência) */}
+        <div className="w-1/2 h-full paper-texture rounded-l-2xl overflow-hidden flex flex-col border-r border-black/30 relative">
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black/15 to-transparent z-10 pointer-events-none"></div>
             
             <IllustrationPanel 
               bookName={leftPageData.book.name}
@@ -128,27 +128,27 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             </div>
         </div>
         
-        {/* LADO DIREITO FIXO */}
+        {/* LADO DIREITO FIXO (Página de Destino) */}
         <div className="relative w-1/2 h-full paper-texture rounded-r-2xl overflow-hidden bg-[#fdfaf3]">
-            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black/15 to-transparent z-10 pointer-events-none"></div>
             
             {rightPageData ? (
                 <PageContent bookName={rightPageData.book.name} chapter={rightPageData.chapter} notes={notes} onVerseClick={onVerseClick} />
             ) : (
-                <div className="flex flex-col items-center justify-center h-full p-10 text-center select-none bg-amber-50/20">
-                    <svg className="w-32 h-32 text-amber-900/10 mb-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.3} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                <div className="flex flex-col items-center justify-center h-full p-20 text-center select-none bg-amber-50/10">
+                    <svg className="w-40 h-40 text-amber-900/5 mb-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
-                    <p className="font-serif-display text-5xl italic text-amber-950/20 tracking-widest font-bold">AMÉM</p>
+                    <p className="font-serif-display text-7xl italic text-amber-950/10 tracking-[0.5em] font-black uppercase">AMÉM</p>
                 </div>
             )}
         </div>
 
-        {/* FLIPPER (A página que levanta) */}
+        {/* FLIPPER MOTOR (A página em vôo) */}
         {isTransitioning && direction && (
           <div className={`flipper ${direction === 'next' ? 'flipper-next' : 'flipper-prev'} flipping`}>
-            {/* FACE FRONTAL (O que estava antes) */}
-            <div className="flipper-face flipper-front paper-texture shadow-2xl">
+            {/* FACE FRONTAL (O estado anterior) */}
+            <div className="flipper-face flipper-front paper-texture shadow-3xl">
               {direction === 'next' ? (
                 prevRightPageData && <PageContent bookName={prevRightPageData.book.name} chapter={prevRightPageData.chapter} notes={notes} onVerseClick={onVerseClick} />
               ) : (
@@ -157,8 +157,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               <div className="page-shadow-overlay"></div>
             </div>
 
-            {/* FACE TRASEIRA (O que vai entrar) */}
-            <div className="flipper-face flipper-back paper-texture shadow-2xl">
+            {/* FACE TRASEIRA (O novo estado) */}
+            <div className="flipper-face flipper-back paper-texture shadow-3xl">
                {direction === 'next' ? (
                  <PageContent bookName={leftPageData.book.name} chapter={leftPageData.chapter} notes={notes} onVerseClick={onVerseClick} isBackPage />
                ) : (
@@ -170,17 +170,18 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         )}
       </div>
       
-      {/* Guia Visual Mobile */}
-      <div className="md:hidden flex justify-center mt-10 items-center gap-3">
-         <span className="text-amber-500/30 text-xs font-bold uppercase tracking-widest">Swipe para virar</span>
-         <div className="w-12 h-1 rounded-full bg-amber-500/20 overflow-hidden">
-            <div className="h-full bg-amber-500 animate-[loading_2s_infinite]"></div>
+      {/* Indicador de Gesto Mobile Aprimorado */}
+      <div className="md:hidden flex flex-col items-center mt-12 gap-4">
+         <span className="text-amber-500/40 text-[10px] font-black uppercase tracking-[0.4em] select-none">Deslize para ler</span>
+         <div className="w-20 h-0.5 rounded-full bg-amber-500/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-amber-500/40 animate-[swipe_3s_infinite_ease-in-out]"></div>
          </div>
       </div>
       <style>{`
-        @keyframes loading {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        @keyframes swipe {
+            0% { transform: translateX(-100%); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
         }
       `}</style>
     </div>
