@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { ParticleBackground } from './components/ParticleBackground';
 import { BibleReader } from './components/BibleReader';
 import { SearchBar } from './components/SearchBar';
@@ -11,6 +11,7 @@ import { Footer } from './components/Footer';
 import { NoteModal } from './components/NoteModal';
 import { ShareButtons } from './components/ShareButtons';
 import { TestimonyModal } from './components/TestimonyModal';
+import { AudioControls } from './components/AudioControls';
 
 type SelectedVerse = {
   bookName: string;
@@ -19,196 +20,188 @@ type SelectedVerse = {
   text: string;
 }
 
-const GiftIcon: React.FC<{className?: string}> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}>
-    <path d="M10 2a3 3 0 00-3 3v1H5a2 2 0 00-2 2v1c0 .552.448 1 1 1h12c.552 0 1-.448 1-1v-1a2 2 0 00-2-2h-2V5a3 3 0 00-3-3zm-1.5 5.5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-    <path d="M3 11.5a1.5 1.5 0 011.5-1.5h11a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 01-1.5 1.5h-11a1.5 1.5 0 01-1.5-1.5v-5z" />
-  </svg>
-);
-
-const ArrowRightIcon: React.FC<{className?: string}> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}>
-    <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
-  </svg>
-);
-
-
 const App: React.FC = () => {
-  const [currentBook, setCurrentBook] = useState<Book>(bibleService.getBook('Gênesis'));
-  const [currentChapterIndex, setCurrentChapterIndex] = useState(0); // This now points to the left page of the spread
+  const getInitialStateFromHash = useCallback(() => {
+    try {
+      const hash = window.location.hash.replace('#/', '');
+      if (hash) {
+        const parts = decodeURIComponent(hash).split('/');
+        if (parts.length >= 2) {
+          const [bookName, chapterNum] = parts;
+          const book = bibleService.getBook(bookName);
+          let chapterIndex = book.chapters.findIndex(c => c.chapter === parseInt(chapterNum));
+          if (chapterIndex === -1) chapterIndex = 0;
+          if (chapterIndex > 0 && chapterIndex % 2 !== 0) chapterIndex--;
+          return { book, chapterIndex };
+        }
+      }
+    } catch (e) {
+      console.warn("Hash access restricted or invalid.");
+    }
+    return null;
+  }, []);
+
+  const [state, setState] = useState(() => getInitialStateFromHash() || { book: bibleService.getBook('Gênesis'), chapterIndex: 0 });
+  const { book: currentBook, chapterIndex: currentChapterIndex } = state;
+  
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // AI Illustration State
   const [currentIllustration, setCurrentIllustration] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [imageCache, setImageCache] = useState(new Map<string, string>());
+  const [imageCache, setImageCache] = useState<Record<string, string>>({});
   
-  // Notes State
-  const [notes, setNotes] = useState<Notes>({});
+  const [notes, setNotes] = useState<Notes>(() => {
+    try {
+      const saved = localStorage.getItem('bible-notes');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<SelectedVerse | null>(null);
-
-  // Testimony State
   const [isTestimonyModalOpen, setIsTestimonyModalOpen] = useState(false);
 
-  // Load notes from localStorage on initial render
   useEffect(() => {
     try {
-      const savedNotes = localStorage.getItem('bible-notes');
-      if (savedNotes) {
-        setNotes(JSON.parse(savedNotes));
+      if (currentBook) {
+        const bookName = encodeURIComponent(currentBook.name);
+        const chapterNum = currentBook.chapters[currentChapterIndex]?.chapter || 1;
+        const newHash = `#/${bookName}/${chapterNum}`;
+        if (window.location.hash !== newHash) {
+          window.history.replaceState(null, '', newHash);
+        }
       }
     } catch (e) {
-      console.error("Failed to load notes from localStorage", e);
+      // Ignore security errors with history API
     }
-  }, []);
+  }, [currentBook, currentChapterIndex]);
 
-  // Save notes to localStorage whenever they change
   useEffect(() => {
     try {
       localStorage.setItem('bible-notes', JSON.stringify(notes));
     } catch (e) {
-      console.error("Failed to save notes to localStorage", e);
+      // Ignore storage errors
     }
   }, [notes]);
 
-
-  // Left page is determined directly by state
   const leftPageData = useMemo(() => ({
     book: currentBook,
-    chapter: currentBook.chapters[currentChapterIndex]
+    chapter: currentBook.chapters[currentChapterIndex] || currentBook.chapters[0]
   }), [currentBook, currentChapterIndex]);
 
-  // Right page is the one after the left page
   const rightPageData = useMemo(() => {
     try {
       const { book, chapterIndex } = bibleService.getAdjacentChapter(currentBook.name, leftPageData.chapter.chapter, 'next');
       return { book, chapter: book.chapters[chapterIndex] };
     } catch {
-      return null; // End of the bible
+      return null;
     }
   }, [currentBook, leftPageData]);
 
   const chapterTextForNarration = useMemo(() => {
     const leftText = `Livro de ${leftPageData.book.name}, capítulo ${leftPageData.chapter.chapter}. ${leftPageData.chapter.verses.map(v => v.text).join(' ')}`;
-    const rightText = rightPageData ? `Página seguinte. Capítulo ${rightPageData.chapter.chapter}. ${rightPageData.chapter.verses.map(v => v.text).join(' ')}` : '';
+    const rightText = rightPageData ? `Capítulo ${rightPageData.chapter.chapter}. ${rightPageData.chapter.verses.map(v => v.text).join(' ')}` : '';
     return `${leftText} ${rightText}`;
   }, [leftPageData, rightPageData]);
 
   const { isSpeaking, isPaused, speak, pause, resume, cancel } = useSpeechSynthesis(chapterTextForNarration);
   
-  const triggerTransition = (callback: () => void) => {
+  const triggerTransition = useCallback((callback: () => void) => {
     setIsTransitioning(true);
-    // Clear illustration when turning page for a fresh start
     setCurrentIllustration(null); 
-    cancel(); // Stop any narration
+    cancel();
     setTimeout(() => {
       callback();
       setTimeout(() => {
         setIsTransitioning(false);
-        setDirection(null);
-      }, 50); // Short delay for content to render before fade in
-    }, 1000); // CSS transition duration
-  };
+      }, 50);
+    }, 800);
+  }, [cancel]);
 
   const navigateSpread = useCallback((dir: 'next' | 'prev') => {
     if (isTransitioning) return;
     setDirection(dir);
-    triggerTransition(() => {
-      try {
-        if (dir === 'next') {
-          // The new left page will be the chapter after the current right page
-          if (!rightPageData) throw new Error("Você chegou ao final da Bíblia.");
-           // Check if there's a chapter after the right page
-          bibleService.getAdjacentChapter(rightPageData.book.name, rightPageData.chapter.chapter, 'next');
-          
-          setCurrentBook(rightPageData.book);
-          setCurrentChapterIndex(rightPageData.book.chapters.findIndex(c => c.chapter === rightPageData.chapter.chapter));
+    
+    try {
+      let targetBook: Book;
+      let targetChapterIndex: number;
 
-        } else { // 'prev'
-          // We need to go back two chapters from the current left page
-           if (leftPageData.book.name === 'Gênesis' && leftPageData.chapter.chapter === 1) {
-              throw new Error("Você está no início da Bíblia.");
-           }
-          const prevPageData = bibleService.getAdjacentChapter(leftPageData.book.name, leftPageData.chapter.chapter, 'prev');
-          const prevPrevPageData = bibleService.getAdjacentChapter(prevPageData.book.name, prevPageData.book.chapters[prevPageData.chapterIndex].chapter, 'prev');
-          setCurrentBook(prevPrevPageData.book);
-          setCurrentChapterIndex(prevPrevPageData.chapterIndex);
+      if (dir === 'next') {
+        if (!rightPageData) throw new Error("Fim da Bíblia.");
+        const nextData = bibleService.getAdjacentChapter(rightPageData.book.name, rightPageData.chapter.chapter, 'next');
+        targetBook = nextData.book;
+        targetChapterIndex = nextData.chapterIndex;
+      } else {
+        if (leftPageData.book.name === 'Gênesis' && leftPageData.chapter.chapter === 1) {
+          throw new Error("Início da Bíblia.");
         }
-        setError(null);
-      } catch (e) {
-         if (e instanceof Error) setError(e.message);
-         else setError('Ocorreu um erro desconhecido.');
-         setTimeout(() => setError(null), 3000);
+        const prevPageData = bibleService.getAdjacentChapter(leftPageData.book.name, leftPageData.chapter.chapter, 'prev');
+        const prevPrevPageData = bibleService.getAdjacentChapter(prevPageData.book.name, prevPageData.book.chapters[prevPageData.chapterIndex].chapter, 'prev');
+        targetBook = prevPrevPageData.book;
+        targetChapterIndex = prevPrevPageData.chapterIndex;
       }
-    });
-  }, [isTransitioning, leftPageData, rightPageData]);
 
-
-  const handleNextChapter = useCallback(() => navigateSpread('next'), [navigateSpread]);
-  const handlePrevChapter = useCallback(() => navigateSpread('prev'), [navigateSpread]);
+      triggerTransition(() => {
+        setState({ book: targetBook, chapterIndex: targetChapterIndex });
+      });
+      setError(null);
+    } catch (e: any) {
+      setError(e.message);
+      setTimeout(() => setError(null), 3000);
+    }
+  }, [isTransitioning, leftPageData, rightPageData, triggerTransition]);
 
   const handleSearch = useCallback((query: string) => {
     if (isTransitioning) return;
-    setDirection('next'); // Treat search as a 'next' animation
-    triggerTransition(() => {
-      try {
-          let { book, chapterIndex } = bibleService.search(query);
-          // If the found chapter is on a right page (odd index), 
-          // start the spread from the previous chapter to make it a left page.
-          if (chapterIndex > 0 && chapterIndex % 2 !== 0) {
-            const result = bibleService.getAdjacentChapter(book.name, book.chapters[chapterIndex].chapter, 'prev');
-            book = result.book;
-            chapterIndex = result.chapterIndex;
-          }
-          setCurrentBook(book);
-          setCurrentChapterIndex(chapterIndex);
-          setError(null);
-      } catch (e) {
-          if (e instanceof Error) setError(e.message);
-          else setError('Ocorreu um erro desconhecido ao buscar.');
-          setTimeout(() => setError(null), 3000);
-      }
-    });
-  }, [isTransitioning]);
+    try {
+        let { book, chapterIndex } = bibleService.search(query);
+        if (chapterIndex > 0 && chapterIndex % 2 !== 0) chapterIndex--;
+        setDirection('next');
+        triggerTransition(() => {
+          setState({ book, chapterIndex });
+        });
+        setError(null);
+    } catch (e: any) {
+        setError(e.message);
+        setTimeout(() => setError(null), 3000);
+    }
+  }, [isTransitioning, triggerTransition]);
   
   const handleGenerateIllustration = useCallback(async (chapter: Chapter, bookName: string) => {
       const cacheKey = `${bookName}-${chapter.chapter}`;
-      if (imageCache.has(cacheKey)) {
-          setCurrentIllustration(imageCache.get(cacheKey)!);
+      if (imageCache[cacheKey]) {
+          setCurrentIllustration(imageCache[cacheKey]);
           return;
       }
-
       setIsGenerating(true);
       setCurrentIllustration(null);
       setError(null);
-
       try {
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-          const summaryText = chapter.verses.slice(0, 4).map(v => v.text).join(' ');
-          const prompt = `Crie uma ilustração bíblica detalhada no estilo de uma iluminação de manuscrito medieval. A cena deve representar o seguinte tema: "${summaryText}". A imagem deve ser reverente, simbólica, com cores ricas e uma qualidade atemporal. Inclua bordas decorativas sutis.`;
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+          const summaryText = chapter.verses.slice(0, 3).map(v => v.text).join(' ');
+          const prompt = `A magnificent biblical oil painting for ${bookName} chapter ${chapter.chapter}. Theme: ${summaryText}. Baroque style, dramatic lighting, high detail.`;
 
-          const response = await ai.models.generateContent({
+          const result = await ai.models.generateContent({
               model: 'gemini-2.5-flash-image',
               contents: { parts: [{ text: prompt }] },
-              config: {
-                  responseModalities: [Modality.IMAGE],
-              },
+              config: { imageConfig: { aspectRatio: "1:1" } }
           });
 
-          const part = response.candidates?.[0]?.content?.parts?.[0];
-          if (part?.inlineData) {
-              const base64ImageBytes = part.inlineData.data;
-              const imageUrl = `data:image/png;base64,${base64ImageBytes}`;
-              setCurrentIllustration(imageUrl);
-              setImageCache(prevCache => new Map(prevCache).set(cacheKey, imageUrl));
+          const parts = result.candidates?.[0]?.content?.parts || [];
+          const imgPart = parts.find(p => p.inlineData);
+          
+          if (imgPart?.inlineData) {
+              const url = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+              setCurrentIllustration(url);
+              setImageCache(prev => ({ ...prev, [cacheKey]: url }));
           } else {
-              throw new Error("Nenhuma imagem foi gerada.");
+              throw new Error("AI failed to provide an image.");
           }
       } catch (err) {
-          setError("Falha ao gerar a ilustração. Tente novamente.");
+          setError("Falha ao gerar ilustração.");
           console.error(err);
       } finally {
           setIsGenerating(false);
@@ -220,112 +213,75 @@ const App: React.FC = () => {
     setIsNoteModalOpen(true);
   }, []);
 
-  const handleCloseNoteModal = useCallback(() => {
-    setIsNoteModalOpen(false);
-    setSelectedVerse(null);
-  }, []);
-
   const handleSaveNote = useCallback((noteText: string) => {
     if (!selectedVerse) return;
     const noteKey = `${selectedVerse.bookName}-${selectedVerse.chapter}-${selectedVerse.verse}`;
-    setNotes(prevNotes => ({
-      ...prevNotes,
-      [noteKey]: noteText,
-    }));
-    handleCloseNoteModal();
-  }, [selectedVerse, handleCloseNoteModal]);
+    setNotes(prev => ({ ...prev, [noteKey]: noteText }));
+    setIsNoteModalOpen(false);
+  }, [selectedVerse]);
 
   const handleDeleteNote = useCallback(() => {
     if (!selectedVerse) return;
     const noteKey = `${selectedVerse.bookName}-${selectedVerse.chapter}-${selectedVerse.verse}`;
-    setNotes(prevNotes => {
-      const newNotes = { ...prevNotes };
-      delete newNotes[noteKey];
-      return newNotes;
+    setNotes(prev => {
+      const next = { ...prev };
+      delete next[noteKey];
+      return next;
     });
-    handleCloseNoteModal();
-  }, [selectedVerse, handleCloseNoteModal]);
+    setIsNoteModalOpen(false);
+  }, [selectedVerse]);
 
-  const handleOpenTestimonyModal = () => setIsTestimonyModalOpen(true);
-  const handleCloseTestimonyModal = () => setIsTestimonyModalOpen(false);
-
-  const handleSaveTestimony = (testimony: string) => {
-    try {
-      localStorage.setItem('user_testimony', testimony);
-      alert('Seu testemunho foi salvo! Obrigado por compartilhar sua fé.');
-      handleCloseTestimonyModal();
-    } catch (e) {
-      console.error("Failed to save testimony to localStorage", e);
-      setError("Não foi possível salvar seu testemunho.");
-    }
-  };
-
-
-   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement).tagName === 'INPUT' || (event.target as HTMLElement).tagName === 'TEXTAREA') return;
-      if (event.key === 'ArrowRight') handleNextChapter();
-      else if (event.key === 'ArrowLeft') handlePrevChapter();
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'ArrowRight') navigateSpread('next');
+      else if (e.key === 'ArrowLeft') navigateSpread('prev');
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNextChapter, handlePrevChapter]);
+  }, [navigateSpread]);
 
   return (
-    <div className="relative min-h-screen bg-gray-900 text-gray-200 overflow-hidden">
+    <div className="relative min-h-screen bg-slate-950 text-slate-200">
       <ParticleBackground />
 
-      <div className="relative z-10 flex flex-col items-center min-h-screen p-2 sm:p-4 md:p-6">
-        <a 
-          href="https://s.shopee.com.br/4LBOSfdWU8" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="w-full max-w-4xl mx-auto mb-4 p-3 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold rounded-lg shadow-lg transition-all duration-300 flex items-center justify-between gap-4"
-        >
-          <div className="flex items-center gap-3">
-            <GiftIcon className="w-6 h-6 flex-shrink-0" />
-            <span className="text-left text-sm sm:text-base">
-              <span className="font-extrabold">Aprofunde seus estudos!</span> Adquira sua Bíblia de Estudo completa.
-            </span>
-          </div>
-          <div className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-full text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap transition-colors">
-            <span>Clique Aqui</span>
-            <ArrowRightIcon className="w-4 h-4" />
-          </div>
-        </a>
-        
-        <header className="w-full max-w-4xl mx-auto text-center">
-          <h1 className="font-serif-display text-4xl sm:text-5xl md:text-6xl font-bold text-amber-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.7)]">
+      <div className="relative z-10 flex flex-col items-center min-h-screen p-4 md:p-8">
+        <header className="w-full max-w-4xl mx-auto text-center mb-8">
+          <h1 className="font-serif-display text-5xl md:text-7xl font-bold text-amber-400 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
             Bíblia Sagrada
           </h1>
-          <p className="text-amber-100/80 mt-2 text-sm sm:text-base">Uma jornada espiritual interativa e ilustrada</p>
+          <p className="text-amber-100/60 mt-2 italic text-lg tracking-wide">A Luz para o Seu Caminho</p>
         </header>
         
-        <main className="w-full flex-grow flex flex-col items-center">
+        <main className="w-full max-w-7xl mx-auto flex-grow flex flex-col items-center">
           <SearchBar onSearch={handleSearch} />
           
-          <div className="flex items-center justify-center gap-4 mt-4 text-amber-200/80">
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
             <ShareButtons url={window.location.href} />
-            <span className="text-gray-600">|</span>
             <button 
-              onClick={handleOpenTestimonyModal}
-              className="px-4 py-2 text-sm bg-gray-900/50 border border-amber-300/30 rounded-full hover:bg-amber-400/20 hover:text-amber-100 transition-all duration-300 backdrop-blur-sm"
+              onClick={() => setIsTestimonyModalOpen(true)}
+              className="px-8 py-2.5 rounded-full border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 transition-all font-semibold shadow-inner"
             >
-              Deixe seu Testemunho
+              Testemunhos
             </button>
           </div>
 
-          {error && <p className="text-red-400 bg-red-900/50 px-4 py-2 rounded-md mt-4 text-center">{error}</p>}
+          {error && (
+            <div className="fixed top-24 z-50 animate-bounce">
+              <span className="bg-red-500/90 text-white px-8 py-3 rounded-full shadow-2xl font-bold border border-red-400/50 backdrop-blur-sm">
+                {error}
+              </span>
+            </div>
+          )}
           
-          <div className="w-full max-w-6xl mx-auto mt-4 flex-grow flex items-center justify-center [perspective:2000px]">
-            <div className="flex items-center justify-between w-full">
+          <div className="w-full mt-10 flex-grow flex items-center justify-center">
+            <div className="flex flex-col md:flex-row items-center justify-center w-full gap-6 md:gap-12">
               <button
-                onClick={handlePrevChapter}
-                className="p-2 md:p-4 rounded-full bg-black/20 hover:bg-amber-400/20 text-amber-200 hover:text-amber-100 transition-all duration-300 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Capítulo Anterior"
+                onClick={() => navigateSpread('prev')}
+                className="hidden md:flex p-5 rounded-full bg-slate-800/50 hover:bg-amber-500/30 text-amber-200 transition-all backdrop-blur-md border border-amber-500/20 hover:scale-110 active:scale-95 shadow-lg group"
                 disabled={isTransitioning}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                <svg className="w-10 h-10 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
               </button>
       
               <BibleReader
@@ -341,13 +297,17 @@ const App: React.FC = () => {
               />
 
               <button
-                onClick={handleNextChapter}
-                className="p-2 md:p-4 rounded-full bg-black/20 hover:bg-amber-400/20 text-amber-200 hover:text-amber-100 transition-all duration-300 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Próximo Capítulo"
+                onClick={() => navigateSpread('next')}
+                className="hidden md:flex p-5 rounded-full bg-slate-800/50 hover:bg-amber-500/30 text-amber-200 transition-all backdrop-blur-md border border-amber-500/20 hover:scale-110 active:scale-95 shadow-lg group"
                 disabled={isTransitioning}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                <svg className="w-10 h-10 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
               </button>
+
+              <div className="flex md:hidden gap-6 mt-4">
+                  <button onClick={() => navigateSpread('prev')} className="px-10 py-3 bg-slate-800/50 rounded-full text-amber-200 border border-amber-500/30 active:bg-amber-500/40">Anterior</button>
+                  <button onClick={() => navigateSpread('next')} className="px-10 py-3 bg-slate-800/50 rounded-full text-amber-200 border border-amber-500/30 active:bg-amber-500/40">Próximo</button>
+              </div>
             </div>
           </div>
         </main>
@@ -370,16 +330,20 @@ const App: React.FC = () => {
           note={notes[`${selectedVerse.bookName}-${selectedVerse.chapter}-${selectedVerse.verse}`] || ''}
           onSave={handleSaveNote}
           onDelete={handleDeleteNote}
-          onClose={handleCloseNoteModal}
+          onClose={() => setIsNoteModalOpen(false)}
         />
       )}
 
       {isTestimonyModalOpen && (
         <TestimonyModal
-          onSave={handleSaveTestimony}
-          onClose={handleCloseTestimonyModal}
+          onSave={(t) => {
+            try { localStorage.setItem('user_testimony', t); } catch {}
+            setIsTestimonyModalOpen(false);
+          }}
+          onClose={() => setIsTestimonyModalOpen(false)}
         />
       )}
+      <AudioControls />
     </div>
   );
 };
