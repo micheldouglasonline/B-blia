@@ -4,12 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- SEO de Alta Performance -->
-    <title>Bíblia Sagrada Dinâmica - Leitura Imersiva e Estudo Bíblico</title>
-    <meta name="description" content="Explore a Bíblia de forma interativa com animações de folheamento, busca inteligente por temas (fé, amor, esperança) e ilustrações artísticas por IA." />
-    <meta name="keywords" content="bíblia sagrada, estudo bíblico, igreja, cristianismo, versículos sobre fé, jesus cristo, evangelho, meditação cristã, bíblia dinâmica" />
-    <meta name="author" content="Michel Douglas Online" />
-    <meta name="robots" content="index, follow" />
+    <title>Bíblia Sagrada Dinâmica - Leitura Imersiva</title>
+    <meta name="description" content="Explore a Bíblia com animações realistas de folheamento e ilustrações geradas por IA." />
 
     <script type="importmap">
 {
@@ -36,7 +32,7 @@
         padding: 0;
         color: #f8fafc;
         overflow-x: hidden;
-        touch-action: pan-y; /* Permite scroll vertical mas intercepta o horizontal */
+        touch-action: pan-y;
       }
       .font-serif-display {
         font-family: 'EB Garamond', serif;
@@ -44,12 +40,13 @@
       .paper-texture {
         background-color: #fdfaf3;
         background-image: url("https://www.transparenttextures.com/patterns/cream-paper.png");
+        box-shadow: inset 0 0 80px rgba(0,0,0,0.02);
       }
       
-      /* Efeito de Folheamento 3D Profissional e Suave */
+      /* Motor de Folheamento 3D Cinematic */
       .book-perspective {
-        perspective: 4000px;
-        filter: drop-shadow(0 30px 50px rgba(0,0,0,0.5));
+        perspective: 3500px;
+        filter: drop-shadow(0 40px 80px rgba(0,0,0,0.6));
       }
       
       .book-wrapper {
@@ -64,10 +61,10 @@
         top: 0;
         width: 50%;
         height: 100%;
-        z-index: 100;
+        z-index: 500;
         transform-style: preserve-3d;
-        /* Curva de transição mais orgânica */
-        transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+        /* Curva de transição suave e natural */
+        transition: transform 1.4s cubic-bezier(0.645, 0.045, 0.355, 1);
         pointer-events: none;
       }
 
@@ -76,7 +73,7 @@
         transform-origin: left center;
       }
       .flipper-next.flipping {
-        transform: rotateY(-180deg) translateZ(1px);
+        transform: rotateY(-180deg) translateZ(2px);
       }
 
       .flipper-prev {
@@ -84,7 +81,7 @@
         transform-origin: right center;
       }
       .flipper-prev.flipping {
-        transform: rotateY(180deg) translateZ(1px);
+        transform: rotateY(180deg) translateZ(2px);
       }
 
       .flipper-face {
@@ -93,11 +90,30 @@
         height: 100%;
         backface-visibility: hidden;
         overflow: hidden;
-        box-shadow: inset 0 0 100px rgba(0,0,0,0.02);
+        border-radius: 0 4px 4px 0;
+      }
+
+      .flipper-prev .flipper-face {
+        border-radius: 4px 0 0 4px;
       }
 
       .flipper-back {
         transform: rotateY(180deg);
+      }
+
+      /* Brilho dinâmico na dobra */
+      .flipper-back::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
+        background-size: 200% 100%;
+        animation: sheen 1.4s forwards;
+      }
+
+      @keyframes sheen {
+        from { background-position: 200% 0; }
+        to { background-position: -200% 0; }
       }
 
       .book-spine {
@@ -105,51 +121,35 @@
         left: 50%;
         top: 0;
         bottom: 0;
-        width: 10px;
+        width: 12px;
         background: linear-gradient(to right, 
-          rgba(0,0,0,0.3) 0%, 
-          rgba(0,0,0,0.6) 50%, 
-          rgba(0,0,0,0.3) 100%);
-        z-index: 200;
+          #1e1b15 0%, 
+          #3d3428 50%, 
+          #1e1b15 100%);
+        z-index: 600;
         transform: translateX(-50%);
-        box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        box-shadow: 0 0 25px rgba(0,0,0,0.5);
       }
 
-      /* Sombras dinâmicas para profundidade */
       .page-shadow-overlay {
         position: absolute;
         inset: 0;
         pointer-events: none;
         z-index: 10;
         opacity: 0;
-        transition: opacity 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+        transition: opacity 0.7s ease;
       }
 
       .flipping .page-shadow-overlay {
-        opacity: 0.4;
+        opacity: 0.5;
       }
 
       .flipper-front .page-shadow-overlay {
-        background: linear-gradient(to right, transparent 60%, rgba(0,0,0,0.4) 100%);
+        background: linear-gradient(to right, transparent 50%, rgba(0,0,0,0.4) 100%);
       }
 
       .flipper-back .page-shadow-overlay {
-        background: linear-gradient(to left, transparent 60%, rgba(0,0,0,0.4) 100%);
-      }
-
-      /* Botão de áudio do versículo */
-      .verse-audio-btn {
-        opacity: 0;
-        transform: scale(0.8);
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      }
-      .verse-item:hover .verse-audio-btn {
-        opacity: 0.7;
-        transform: scale(1);
-      }
-      .verse-audio-btn:hover {
-        opacity: 1 !important;
-        background-color: rgba(180, 83, 9, 0.1);
+        background: linear-gradient(to left, transparent 50%, rgba(0,0,0,0.4) 100%);
       }
 
       @keyframes slideDown {
@@ -157,18 +157,11 @@
         to { transform: translateY(0); }
       }
       .animate-slide-down {
-        animation: slideDown 0.5s ease-out forwards;
+        animation: slideDown 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
       }
 
       .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-      .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-      .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(180, 83, 9, 0.2); border-radius: 10px; }
-      
-      @media (max-width: 768px) {
-        .book-wrapper {
-          aspect-ratio: 1/1.5; /* Ajuste para mobile se necessário, mas BibleReader controla isso */
-        }
-      }
+      .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(180, 83, 9, 0.15); border-radius: 10px; }
     </style>
   </head>
   <body>
