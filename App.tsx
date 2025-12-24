@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { ParticleBackground } from './components/ParticleBackground';
 import { BibleReader } from './components/BibleReader';
@@ -53,6 +53,9 @@ const App: React.FC = () => {
   const [selectedVerse, setSelectedVerse] = useState<SelectedVerse | null>(null);
   const [isTestimonyModalOpen, setIsTestimonyModalOpen] = useState(false);
 
+  // Refs para controle de toque (swipe)
+  const touchStartRef = useRef<number | null>(null);
+
   useEffect(() => {
     try {
       if (currentBook) {
@@ -100,16 +103,15 @@ const App: React.FC = () => {
     setIsTransitioning(true);
     cancel();
     
-    // Pequeno delay para permitir que o React processe o prevState
     setTimeout(() => {
       setState(newState);
       setCurrentIllustration(null);
       
-      // Sincronizado com a duração do CSS (0.8s)
+      // Sincronizado com a duração do CSS (1.2s)
       setTimeout(() => {
         setIsTransitioning(false);
         setPrevState(null);
-      }, 800);
+      }, 1200);
     }, 20);
   }, [state, cancel]);
 
@@ -130,7 +132,7 @@ const App: React.FC = () => {
         } catch (localError) {}
 
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-        const prompt = `Assistant: User search "${query}". Return the most relevant Bible Book and Chapter. Format: "Book Chapter". Example: "Psalms 23". If not found, "Not found".`;
+        const prompt = `Interpretador Bíblico: Busca do usuário "${query}". Retorne Livro e Capítulo mais relevante no formato "Livro Capítulo". Se nada relevante for encontrado, retorne "Não encontrado".`;
 
         const result = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
@@ -138,7 +140,7 @@ const App: React.FC = () => {
         });
 
         const aiResponse = result.text?.trim();
-        if (aiResponse && aiResponse !== "Not found") {
+        if (aiResponse && aiResponse !== "Não encontrado") {
             const bibleResult = bibleService.search(aiResponse);
             let chapterIndex = bibleResult.chapterIndex;
             if (chapterIndex > 0 && chapterIndex % 2 !== 0) chapterIndex--;
@@ -181,7 +183,7 @@ const App: React.FC = () => {
       setError(null);
       try {
           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-          const prompt = `Art for ${bookName} ${chapter.chapter}. Biblical scene, oil painting, high drama.`;
+          const prompt = `Ilustração bíblica para ${bookName} ${chapter.chapter}. Estilo pintura clássica a óleo, dramático, luz divina.`;
           const result = await ai.models.generateContent({
               model: 'gemini-2.5-flash-image',
               contents: { parts: [{ text: prompt }] },
@@ -193,14 +195,39 @@ const App: React.FC = () => {
               setCurrentIllustration(url);
               setImageCache(prev => ({ ...prev, [cacheKey]: url }));
           }
-      } catch { setError("IA ocupada."); } finally { setIsGenerating(false); }
+      } catch { setError("Serviço de arte indisponível no momento."); } finally { setIsGenerating(false); }
   }, [imageCache]);
 
+  // Handlers para gestos de swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = e.touches[0].clientX;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartRef.current === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStartRef.current - touchEnd;
+    const threshold = 60; // Distância mínima para swipe
+
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        navigateSpread('next');
+      } else {
+        navigateSpread('prev');
+      }
+    }
+    touchStartRef.current = null;
+  };
+
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-200 overflow-x-hidden">
+    <div 
+      className="relative min-h-screen bg-slate-950 text-slate-200 overflow-x-hidden flex flex-col"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <div className="relative z-50 bg-gradient-to-r from-amber-700 via-amber-500 to-amber-800 py-2.5 text-center shadow-xl animate-slide-down">
         <a href="https://mercadolivre.com/sec/2ATGUpL" target="_blank" className="inline-flex items-center gap-2 text-white font-bold text-sm sm:text-base hover:scale-105 transition-all">
-          <span className="bg-white/30 px-2 py-0.5 rounded text-xs uppercase">Oferta</span>
+          <span className="bg-white/30 px-2 py-0.5 rounded text-xs uppercase">Estudo</span>
           Melhores materiais bíblicos em destaque!
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5-5 5M6 7l5 5-5 5" /></svg>
         </a>
@@ -208,20 +235,20 @@ const App: React.FC = () => {
 
       <ParticleBackground />
 
-      <div className="relative z-10 flex flex-col items-center min-h-screen p-4 md:p-8">
+      <div className="relative z-10 flex flex-col items-center flex-grow p-4 md:p-8">
         <header className="w-full max-w-4xl mx-auto text-center mb-6">
           <h1 className="font-serif-display text-5xl md:text-8xl font-bold text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.3)]">
             Bíblia Sagrada
           </h1>
-          <p className="text-amber-100/40 mt-2 italic text-lg tracking-widest uppercase">A Palavra que Transforma</p>
+          <p className="text-amber-100/40 mt-2 italic text-lg tracking-widest uppercase">A Palavra que Alimenta a Alma</p>
         </header>
         
         <main className="w-full max-w-7xl mx-auto flex-grow flex flex-col items-center">
           <div className="relative w-full max-w-md">
             <SearchBar onSearch={handleSearch} />
             {isAiLoading && (
-              <div className="absolute -bottom-8 left-0 right-0 text-center text-amber-400 text-xs animate-pulse">
-                Buscando nas escrituras...
+              <div className="absolute -bottom-8 left-0 right-0 text-center text-amber-400 text-xs animate-pulse font-medium">
+                Sondando as escrituras...
               </div>
             )}
           </div>
