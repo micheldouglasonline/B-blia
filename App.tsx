@@ -13,6 +13,25 @@ import { ShareButtons } from './components/ShareButtons';
 import { TestimonyModal } from './components/TestimonyModal';
 import { AudioControls } from './components/AudioControls';
 
+// Utilitário para evitar SecurityError no LocalStorage
+const safeStorage = {
+  memoryStore: {} as Record<string, string>,
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return safeStorage.memoryStore[key] || null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      safeStorage.memoryStore[key] = value;
+    }
+  }
+};
+
 type SelectedVerse = {
   bookName: string;
   chapter: number;
@@ -36,7 +55,7 @@ const App: React.FC = () => {
         }
       }
     } catch (e) {
-      console.warn("Hash access restricted or invalid.");
+      console.warn("Navegação segura ativada.");
     }
     return null;
   }, []);
@@ -52,8 +71,8 @@ const App: React.FC = () => {
   const [imageCache, setImageCache] = useState<Record<string, string>>({});
   
   const [notes, setNotes] = useState<Notes>(() => {
+    const saved = safeStorage.getItem('bible-notes');
     try {
-      const saved = localStorage.getItem('bible-notes');
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -75,16 +94,12 @@ const App: React.FC = () => {
         }
       }
     } catch (e) {
-      // Ignore security errors with history API
+      // Falha silenciosa para evitar crash no sandbox
     }
   }, [currentBook, currentChapterIndex]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('bible-notes', JSON.stringify(notes));
-    } catch (e) {
-      // Ignore storage errors
-    }
+    safeStorage.setItem('bible-notes', JSON.stringify(notes));
   }, [notes]);
 
   const leftPageData = useMemo(() => ({
@@ -182,7 +197,7 @@ const App: React.FC = () => {
       try {
           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
           const summaryText = chapter.verses.slice(0, 3).map(v => v.text).join(' ');
-          const prompt = `A magnificent biblical oil painting for ${bookName} chapter ${chapter.chapter}. Theme: ${summaryText}. Baroque style, dramatic lighting, high detail.`;
+          const prompt = `A magnificent biblical oil painting for ${bookName} chapter ${chapter.chapter}. Theme: ${summaryText}. Baroque style, dramatic lighting.`;
 
           const result = await ai.models.generateContent({
               model: 'gemini-2.5-flash-image',
@@ -198,10 +213,10 @@ const App: React.FC = () => {
               setCurrentIllustration(url);
               setImageCache(prev => ({ ...prev, [cacheKey]: url }));
           } else {
-              throw new Error("AI failed to provide an image.");
+              throw new Error("Falha na geração.");
           }
       } catch (err) {
-          setError("Falha ao gerar ilustração.");
+          setError("Tente novamente em instantes.");
           console.error(err);
       } finally {
           setIsGenerating(false);
@@ -243,6 +258,20 @@ const App: React.FC = () => {
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-200">
+      {/* Banner Promocional */}
+      <div className="relative z-50 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 py-2.5 text-center shadow-lg animate-slide-down">
+        <a 
+          href="https://mercadolivre.com/sec/2ATGUpL" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="group inline-flex items-center gap-2 text-white font-bold text-sm sm:text-base hover:scale-105 transition-transform"
+        >
+          <span className="bg-white/20 px-2 py-0.5 rounded text-xs uppercase tracking-wider">Oferta</span>
+          Confira Materiais de Estudo Bíblico em Destaque!
+          <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+        </a>
+      </div>
+
       <ParticleBackground />
 
       <div className="relative z-10 flex flex-col items-center min-h-screen p-4 md:p-8">
@@ -337,7 +366,7 @@ const App: React.FC = () => {
       {isTestimonyModalOpen && (
         <TestimonyModal
           onSave={(t) => {
-            try { localStorage.setItem('user_testimony', t); } catch {}
+            safeStorage.setItem('user_testimony', t);
             setIsTestimonyModalOpen(false);
           }}
           onClose={() => setIsTestimonyModalOpen(false)}

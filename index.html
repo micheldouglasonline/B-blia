@@ -3,7 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bíblia Dinâmica Ilustrada</title>
+    
+    <!-- SEO Básico -->
+    <title>Bíblia Sagrada Dinâmica - Estudo e Palavra de Deus Online</title>
+    <meta name="description" content="Explore a Bíblia Sagrada de forma interativa. Busca de capítulos, narração em áudio, ilustrações por IA e ferramentas de estudo para igrejas e cristãos." />
+    <meta name="keywords" content="bíblia sagrada, bíblia online, estudo bíblico, igreja evangélica, palavra de deus, versículos, cristão, teologia, harpa cristã, pregação, evangelho" />
+    <meta name="author" content="Michel Douglas Online" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph (Social Media) -->
+    <meta property="og:title" content="Bíblia Sagrada Dinâmica e Ilustrada" />
+    <meta property="og:description" content="A experiência mais completa de leitura bíblica digital com áudio e ilustrações." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://www.transparenttextures.com/patterns/cream-paper.png" />
+
+    <!-- Structured Data (Google Rich Results) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Book",
+      "name": "Bíblia Sagrada",
+      "author": "Inspirado por Deus",
+      "genre": "Religioso",
+      "description": "Textos sagrados do Cristianismo com interface dinâmica e ilustrações."
+    }
+    </script>
 
     <script type="importmap">
 {
@@ -39,7 +63,6 @@
         background-image: url("https://www.transparenttextures.com/patterns/cream-paper.png");
         position: relative;
       }
-      /* Vinco central do livro */
       .book-spine {
         position: absolute;
         left: 50%;
@@ -65,6 +88,13 @@
       .scrollbar-thin::-webkit-scrollbar-thumb {
         background: rgba(180, 83, 9, 0.2);
         border-radius: 10px;
+      }
+      @keyframes slideDown {
+        from { transform: translateY(-100%); }
+        to { transform: translateY(0); }
+      }
+      .animate-slide-down {
+        animation: slideDown 0.5s ease-out forwards;
       }
     </style>
   </head>
