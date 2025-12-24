@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Chapter, Book, Verse, Notes } from '../types';
 import { IllustrationPanel } from './IllustrationPanel';
 
@@ -10,6 +10,8 @@ interface PageData {
 interface BibleReaderProps {
   leftPageData: PageData;
   rightPageData: PageData | null;
+  prevLeftPageData: PageData | null;
+  prevRightPageData: PageData | null;
   isTransitioning: boolean;
   direction: 'next' | 'prev' | null;
   illustration: string | null;
@@ -19,11 +21,10 @@ interface BibleReaderProps {
   onVerseClick: (bookName: string, chapterNumber: number, verse: Verse) => void;
 }
 
-const NoteIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}>
-      <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
-      <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
-    </svg>
+const SpeakerIcon = ({ className = '' }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+  </svg>
 );
 
 const VerseItem: React.FC<{
@@ -33,23 +34,40 @@ const VerseItem: React.FC<{
   hasNote: boolean;
   onVerseClick: (bookName: string, chapterNumber: number, verse: Verse) => void;
 }> = ({ bookName, chapterNumber, verse, hasNote, onVerseClick }) => {
+  
+  const handleReadVerse = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(`${verse.text}`);
+    const voices = window.speechSynthesis.getVoices();
+    const ptVoice = voices.find(v => v.lang.startsWith('pt-BR'));
+    if (ptVoice) utterance.voice = ptVoice;
+    utterance.rate = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div 
-      className="relative group cursor-pointer hover:bg-amber-400/10 rounded-md p-3 -m-3 transition-all duration-300"
+      className="verse-item relative group cursor-pointer hover:bg-amber-400/5 rounded-lg p-3 -mx-2 transition-all duration-300"
       onClick={() => onVerseClick(bookName, chapterNumber, verse)}
     >
-      <p className="text-slate-800 font-serif-display text-lg sm:text-xl leading-relaxed">
-        <sup className="font-sans text-amber-600/90 mr-2 text-xs font-bold">{verse.verse}</sup>
-        {verse.text}
-        {hasNote && <NoteIcon className="inline-block w-4 h-4 ml-2 text-amber-600/70" />}
-      </p>
-      
-      <button 
-        className="absolute top-3 right-3 p-1.5 rounded-full bg-amber-200/50 opacity-0 group-hover:opacity-100 transition-opacity text-amber-900 shadow-sm"
-        title="Ver Anotações"
-      >
-        <NoteIcon className="w-3.5 h-3.5" />
-      </button>
+      <div className="flex gap-3">
+        <div className="flex flex-col items-center pt-1 min-w-[24px]">
+          <sup className="font-sans text-amber-700/80 text-[10px] font-black uppercase mb-2">{verse.verse}</sup>
+          <button 
+            onClick={handleReadVerse}
+            className="verse-audio-btn p-1 rounded-full text-amber-700/40 hover:text-amber-600 hover:bg-amber-100 transition-all"
+            title="Ouvir este versículo"
+          >
+            <SpeakerIcon className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <p className="text-slate-800 font-serif-display text-xl leading-relaxed flex-grow">
+          {verse.text}
+          {hasNote && <span className="ml-2 inline-block w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span>}
+        </p>
+      </div>
     </div>
   );
 };
@@ -57,56 +75,41 @@ const VerseItem: React.FC<{
 const PageContent: React.FC<{ 
     bookName: string, 
     chapter: Chapter | null, 
-    className?: string,
     notes: Notes,
     onVerseClick: (bookName: string, chapterNumber: number, verse: Verse) => void;
-}> = ({ bookName, chapter, className="", notes, onVerseClick }) => {
-    if (!chapter) return <div className={`w-full h-full ${className}`} />;
+    isBackPage?: boolean;
+}> = ({ bookName, chapter, notes, onVerseClick, isBackPage }) => {
+    if (!chapter) return null;
     return (
-        <div className={`p-8 sm:p-10 md:p-12 h-full overflow-y-auto scrollbar-thin ${className}`}>
-            <h2 className="font-serif-display text-4xl sm:text-5xl font-bold text-amber-900 text-center mb-10 border-b border-amber-200 pb-4">
+        <div className={`p-10 md:p-14 h-full overflow-y-auto scrollbar-thin paper-texture ${isBackPage ? 'scale-x-[-1]' : ''}`}>
+            <h2 className="font-serif-display text-5xl font-bold text-amber-950 text-center mb-8 pb-4 border-b-2 border-amber-200/60 italic">
               {bookName} {chapter.chapter}
             </h2>
-            <div className="space-y-8">
-            {chapter.verses.map((verse) => {
-              const noteKey = `${bookName}-${chapter.chapter}-${verse.verse}`;
-              const hasNote = !!notes[noteKey];
-              return (
-                <VerseItem 
-                  key={verse.verse}
-                  bookName={bookName}
-                  chapterNumber={chapter.chapter}
-                  verse={verse}
-                  hasNote={hasNote}
-                  onVerseClick={onVerseClick}
-                />
-              )
-            })}
+            <div className="space-y-4">
+            {chapter.verses.map((v) => (
+              <VerseItem key={v.verse} bookName={bookName} chapterNumber={chapter.chapter} verse={v} hasNote={!!notes[`${bookName}-${chapter.chapter}-${v.verse}`]} onVerseClick={onVerseClick} />
+            ))}
             </div>
         </div>
     );
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({ 
-  leftPageData, rightPageData, isTransitioning, direction,
-  illustration, isGenerating, onGenerateIllustration,
-  notes, onVerseClick
+  leftPageData, rightPageData, prevLeftPageData, prevRightPageData,
+  isTransitioning, direction, illustration, isGenerating, 
+  onGenerateIllustration, notes, onVerseClick
 }) => {
   
-  // Animação de virar página: combina escala, rotação e opacidade
-  const transitionClasses = isTransitioning 
-    ? `opacity-0 scale-95 ${direction === 'next' ? '-rotate-y-12 translate-x-12' : 'rotate-y-12 -translate-x-12'}`
-    : 'opacity-100 scale-100 rotate-y-0 translate-x-0';
-
   return (
-    <div className="w-full max-w-2xl lg:max-w-6xl mx-auto perspective-1000">
-      <div 
-        className={`relative w-full aspect-[2/1.3] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] rounded-lg flex transition-all duration-[800ms] cubic-bezier(0.4, 0, 0.2, 1) transform-style-3d ${transitionClasses}`}
-      >
+    <div className="book-perspective w-full max-w-2xl lg:max-w-6xl mx-auto">
+      <div className="book-wrapper relative w-full aspect-[2/1.35] shadow-[0_60px_100px_-20px_rgba(0,0,0,0.8)] rounded-xl flex overflow-visible">
         <div className="book-spine" />
         
-        {/* Página Esquerda */}
-        <div className="w-1/2 h-full paper-texture rounded-l-lg page-inner-shadow-left overflow-hidden flex flex-col bg-[#fdfaf3] border-r border-amber-200/50">
+        {/* PÁGINAS DE FUNDO */}
+        <div className="w-1/2 h-full paper-texture rounded-l-xl overflow-hidden flex flex-col border-r border-amber-200/40 relative">
+            {/* Sombra de dobra na página fixa da esquerda */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/10 to-transparent z-10 pointer-events-none"></div>
+            
             <IllustrationPanel 
               bookName={leftPageData.book.name}
               chapter={leftPageData.chapter}
@@ -115,32 +118,47 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               isGenerating={isGenerating}
             />
             <div className="flex-grow overflow-hidden relative">
-              <PageContent 
-                    bookName={leftPageData.book.name}
-                    chapter={leftPageData.chapter}
-                    notes={notes}
-                    onVerseClick={onVerseClick}
-                />
+              <PageContent bookName={leftPageData.book.name} chapter={leftPageData.chapter} notes={notes} onVerseClick={onVerseClick} />
             </div>
         </div>
         
-        {/* Página Direita */}
-        <div className="relative w-1/2 h-full paper-texture rounded-r-lg page-inner-shadow-right bg-[#fdfaf3]">
+        <div className="relative w-1/2 h-full paper-texture rounded-r-xl overflow-hidden bg-[#fdfaf3]">
+            {/* Sombra de dobra na página fixa da direita */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/10 to-transparent z-10 pointer-events-none"></div>
+            
             {rightPageData ? (
-                 <div className="h-full relative overflow-hidden">
-                    <PageContent 
-                        bookName={rightPageData.book.name}
-                        chapter={rightPageData.chapter}
-                        notes={notes}
-                        onVerseClick={onVerseClick}
-                    />
-                 </div>
+                <PageContent bookName={rightPageData.book.name} chapter={rightPageData.chapter} notes={notes} onVerseClick={onVerseClick} />
             ) : (
-                <div className="flex items-center justify-center h-full">
-                    <p className="font-serif-display text-4xl text-amber-800/20 italic">Amém.</p>
+                <div className="flex flex-col items-center justify-center h-full p-10 text-center opacity-30">
+                    <p className="font-serif-display text-4xl italic text-amber-950">Amém</p>
                 </div>
             )}
         </div>
+
+        {/* FLIPPER: A página que voa */}
+        {isTransitioning && direction && (
+          <div className={`flipper ${direction === 'next' ? 'flipper-next' : 'flipper-prev'} flipping`}>
+            {/* FACE FRONTAL */}
+            <div className="flipper-face flipper-front paper-texture shadow-2xl">
+              {direction === 'next' ? (
+                prevRightPageData && <PageContent bookName={prevRightPageData.book.name} chapter={prevRightPageData.chapter} notes={notes} onVerseClick={onVerseClick} />
+              ) : (
+                prevLeftPageData && <PageContent bookName={prevLeftPageData.book.name} chapter={prevLeftPageData.chapter} notes={notes} onVerseClick={onVerseClick} />
+              )}
+              <div className="page-shadow-overlay"></div>
+            </div>
+
+            {/* FACE TRASEIRA */}
+            <div className="flipper-face flipper-back paper-texture shadow-2xl">
+               {direction === 'next' ? (
+                 <PageContent bookName={leftPageData.book.name} chapter={leftPageData.chapter} notes={notes} onVerseClick={onVerseClick} isBackPage />
+               ) : (
+                 rightPageData && <PageContent bookName={rightPageData.book.name} chapter={rightPageData.chapter} notes={notes} onVerseClick={onVerseClick} isBackPage />
+               )}
+               <div className="page-shadow-overlay"></div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

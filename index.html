@@ -4,30 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- SEO Básico -->
-    <title>Bíblia Sagrada Dinâmica - Estudo e Palavra de Deus Online</title>
-    <meta name="description" content="Explore a Bíblia Sagrada de forma interativa. Busca de capítulos, narração em áudio, ilustrações por IA e ferramentas de estudo para igrejas e cristãos." />
-    <meta name="keywords" content="bíblia sagrada, bíblia online, estudo bíblico, igreja evangélica, palavra de deus, versículos, cristão, teologia, harpa cristã, pregação, evangelho" />
+    <!-- SEO de Alta Performance -->
+    <title>Bíblia Sagrada Dinâmica - Leitura Imersiva e Estudo Bíblico</title>
+    <meta name="description" content="Explore a Bíblia de forma interativa com animações de folheamento, busca inteligente por temas (fé, amor, esperança) e ilustrações artísticas por IA." />
+    <meta name="keywords" content="bíblia sagrada, estudo bíblico, igreja, cristianismo, versículos sobre fé, jesus cristo, evangelho, meditação cristã, bíblia dinâmica" />
     <meta name="author" content="Michel Douglas Online" />
     <meta name="robots" content="index, follow" />
-
-    <!-- Open Graph (Social Media) -->
-    <meta property="og:title" content="Bíblia Sagrada Dinâmica e Ilustrada" />
-    <meta property="og:description" content="A experiência mais completa de leitura bíblica digital com áudio e ilustrações." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://www.transparenttextures.com/patterns/cream-paper.png" />
-
-    <!-- Structured Data (Google Rich Results) -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Book",
-      "name": "Bíblia Sagrada",
-      "author": "Inspirado por Deus",
-      "genre": "Religioso",
-      "description": "Textos sagrados do Cristianismo com interface dinâmica e ilustrações."
-    }
-    </script>
 
     <script type="importmap">
 {
@@ -61,40 +43,118 @@
       .paper-texture {
         background-color: #fdfaf3;
         background-image: url("https://www.transparenttextures.com/patterns/cream-paper.png");
-        position: relative;
       }
+      
+      /* Efeito de Folheamento 3D Suavizado */
+      .book-perspective {
+        perspective: 3000px; /* Perspectiva mais profunda */
+      }
+      
+      .book-wrapper {
+        position: relative;
+        transform-style: preserve-3d;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.6s ease-out;
+      }
+
+      .flipper {
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 100%;
+        z-index: 100;
+        transform-style: preserve-3d;
+        /* Curva de transição mais natural (ease-in-out modificado) */
+        transition: transform 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+        pointer-events: none;
+      }
+
+      .flipper-next {
+        right: 0;
+        transform-origin: left center;
+      }
+      .flipper-next.flipping {
+        transform: rotateY(-180deg) scale(1.02); /* Leve 'salto' para fora ao virar */
+      }
+
+      .flipper-prev {
+        left: 0;
+        transform-origin: right center;
+      }
+      .flipper-prev.flipping {
+        transform: rotateY(180deg) scale(1.02);
+      }
+
+      .flipper-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        overflow: hidden;
+        box-shadow: inset 0 0 100px rgba(0,0,0,0.05); /* Sombra interna para volume */
+      }
+
+      .flipper-back {
+        transform: rotateY(180deg);
+      }
+
       .book-spine {
         position: absolute;
         left: 50%;
         top: 0;
         bottom: 0;
-        width: 2px;
-        background: linear-gradient(to right, rgba(0,0,0,0.1), rgba(0,0,0,0.3), rgba(0,0,0,0.1));
-        z-index: 10;
+        width: 6px;
+        background: linear-gradient(to right, 
+          rgba(0,0,0,0.2) 0%, 
+          rgba(0,0,0,0.5) 50%, 
+          rgba(0,0,0,0.2) 100%);
+        z-index: 200;
         transform: translateX(-50%);
+        box-shadow: 0 0 15px rgba(0,0,0,0.3);
       }
-      .page-inner-shadow-left {
-        box-shadow: inset -30px 0 30px -20px rgba(0,0,0,0.15);
+
+      /* Sombra que 'segue' a dobra da página */
+      .page-shadow-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+        transition: opacity 1s ease-in-out;
       }
-      .page-inner-shadow-right {
-        box-shadow: inset 30px 0 30px -20px rgba(0,0,0,0.15);
+
+      .flipping .flipper-front .page-shadow-overlay {
+        background: linear-gradient(to right, transparent 50%, rgba(0,0,0,0.3) 100%);
       }
-      .scrollbar-thin::-webkit-scrollbar {
-        width: 4px;
+
+      .flipping .flipper-back .page-shadow-overlay {
+        background: linear-gradient(to left, transparent 50%, rgba(0,0,0,0.3) 100%);
       }
-      .scrollbar-thin::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .scrollbar-thin::-webkit-scrollbar-thumb {
-        background: rgba(180, 83, 9, 0.2);
-        border-radius: 10px;
-      }
+
       @keyframes slideDown {
         from { transform: translateY(-100%); }
         to { transform: translateY(0); }
       }
       .animate-slide-down {
         animation: slideDown 0.5s ease-out forwards;
+      }
+
+      .scrollbar-thin::-webkit-scrollbar { width: 5px; }
+      .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+      .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(180, 83, 9, 0.2); border-radius: 10px; }
+
+      /* Botão de áudio do versículo */
+      .verse-audio-btn {
+        opacity: 0;
+        transform: translateX(-5px);
+        transition: all 0.2s ease-out;
+      }
+      .verse-item:hover .verse-audio-btn {
+        opacity: 0.6;
+        transform: translateX(0);
+      }
+      .verse-audio-btn:hover {
+        opacity: 1 !important;
       }
     </style>
   </head>
